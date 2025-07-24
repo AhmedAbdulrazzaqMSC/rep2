@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repair Form</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .part-option, .job-entry {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      cursor: pointer;
+    }
+    .job-entry.selected {
+      background-color: #def;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <label for="part-search">Select Part</label>
+    <input id="part-search" type="text" placeholder="Search part..." style="width: 100%; padding: 0.5rem; margin-top: 0.5rem" />
+    <select id="part-dropdown" size="10" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem"></select>
+  </div>
+
+  <div id="job-section" class="card" style="display: none">
+    <h2 id="selected-part"></h2>
+    <div id="job-entries"></div>
+  </div>
+
+  <script src="js/part_data.js"></script>
+  <script>
+    const partInput = document.getElementById('part-search');
+    const partDropdown = document.getElementById('part-dropdown');
+    const jobSection = document.getElementById('job-section');
+    const selectedPartEl = document.getElementById('selected-part');
+    const jobEntries = document.getElementById('job-entries');
+
+    let selectedJobCodes = [];
+
+    
+function updateDropdown(query) {
+  if (!Array.isArray(partDropdownOptions)) {
+    console.error("partDropdownOptions is not loaded or malformed.");
+    return;
+  }
+
+      partDropdown.innerHTML = '';
+      const matches = partDropdownOptions.filter(opt =>
+        opt.Display.toLowerCase().includes(query.toLowerCase())
+      );
+
+      matches.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt["Part Number"];
+        option.textContent = opt["Display"];
+        partDropdown.appendChild(option);
+      });
+    }
+
+    partInput.addEventListener('input', () => {
+      updateDropdown(partInput.value);
+    });
+
+    partDropdown.addEventListener('change', () => {
+      const selectedPart = partDropdown.value;
+      if (selectedPart) {
+        selectPart(selectedPart);
+      }
+    });
+
+    function selectPart(part) {
+      selectedJobCodes = [];
+      selectedPartEl.textContent = `Selected Part: ${part}`;
+      jobEntries.innerHTML = '';
+
+      (partJobMap[part] || []).forEach(job => {
+        const jobDiv = document.createElement('div');
+        jobDiv.className = 'job-entry';
+        jobDiv.innerHTML = `<strong>${job.code}</strong><br>${job.description}<br><small>Labor Hours: ${job.hours}</small>`;
+        jobDiv.onclick = () => {
+          jobDiv.classList.toggle('selected');
+          if (selectedJobCodes.includes(job.code)) {
+            selectedJobCodes = selectedJobCodes.filter(c => c !== job.code);
+          } else {
+            selectedJobCodes.push(job.code);
+          }
+        };
+        jobEntries.appendChild(jobDiv);
+      });
+
+      jobSection.style.display = 'block';
+    }
+
+    // Initial render
+    updateDropdown('');
+  </script>
+</body>
+</html>
