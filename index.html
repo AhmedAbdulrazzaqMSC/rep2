@@ -1,111 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Repair Form</title>
+  <meta charset="UTF-8">
+  <title>Part Selector</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 2rem;
+      font-family: Arial, sans-serif;
+      padding: 40px;
     }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 1rem;
+    .dropdown-container {
+      max-width: 600px;
+      margin: auto;
     }
-    .part-option, .job-entry {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-top: 0.5rem;
-      cursor: pointer;
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
-    .job-entry.selected {
-      background-color: #def;
+    select {
+      width: 100%;
+      height: 250px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <label for="part-search">Select Part</label>
-    <input id="part-search" type="text" placeholder="Search part..." style="width: 100%; padding: 0.5rem; margin-top: 0.5rem" />
-    <select id="part-dropdown" size="10" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem"></select>
+  <div class="dropdown-container">
+    <h2>Select Part</h2>
+    <input type="text" id="searchInput" placeholder="Search part...">
+    <select id="partDropdown" size="10"></select>
   </div>
 
-  <div id="job-section" class="card" style="display: none">
-    <h2 id="selected-part"></h2>
-    <div id="job-entries"></div>
-  </div>
+  <!-- Load part data -->
+  <script src="part_data.js"></script>
 
-  <script src="js/part_data.js"></script>
   <script>
-    const partInput = document.getElementById('part-search');
-    const partDropdown = document.getElementById('part-dropdown');
-    const jobSection = document.getElementById('job-section');
-    const selectedPartEl = document.getElementById('selected-part');
-    const jobEntries = document.getElementById('job-entries');
+    const partDropdown = document.getElementById("partDropdown");
+    const searchInput = document.getElementById("searchInput");
 
-    let selectedJobCodes = [];
+    // This must be defined in part_data.js
+    // const partDropdownOptions = [ { Display: "...", ... }, ... ];
 
-    
-function updateDropdown(query) {
-  if (!Array.isArray(partDropdownOptions)) {
-    console.error("partDropdownOptions is not loaded or malformed.");
-    return;
-  }
+    function updateDropdown() {
+      const search = searchInput.value.toLowerCase();
+      partDropdown.innerHTML = "";
 
-      partDropdown.innerHTML = '';
-      const matches = partDropdownOptions.filter(opt =>
-        opt.Display.toLowerCase().includes(query.toLowerCase())
-      );
-
-      matches.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt["Part Number"];
-        option.textContent = opt["Display"];
-        partDropdown.appendChild(option);
-      });
+      partDropdownOptions
+        .filter(opt =>
+          typeof opt.Display === "string" &&
+          opt.Display.toLowerCase().includes(search)
+        )
+        .forEach(opt => {
+          const option = document.createElement("option");
+          option.text = opt.Display;
+          option.value = opt.Value || opt.Display;
+          partDropdown.add(option);
+        });
     }
 
-    partInput.addEventListener('input', () => {
-      updateDropdown(partInput.value);
-    });
+    searchInput.addEventListener("input", updateDropdown);
 
-    partDropdown.addEventListener('change', () => {
-      const selectedPart = partDropdown.value;
-      if (selectedPart) {
-        selectPart(selectedPart);
-      }
-    });
-
-    function selectPart(part) {
-      selectedJobCodes = [];
-      selectedPartEl.textContent = `Selected Part: ${part}`;
-      jobEntries.innerHTML = '';
-
-      (partJobMap[part] || []).forEach(job => {
-        const jobDiv = document.createElement('div');
-        jobDiv.className = 'job-entry';
-        jobDiv.innerHTML = `<strong>${job.code}</strong><br>${job.description}<br><small>Labor Hours: ${job.hours}</small>`;
-        jobDiv.onclick = () => {
-          jobDiv.classList.toggle('selected');
-          if (selectedJobCodes.includes(job.code)) {
-            selectedJobCodes = selectedJobCodes.filter(c => c !== job.code);
-          } else {
-            selectedJobCodes.push(job.code);
-          }
-        };
-        jobEntries.appendChild(jobDiv);
-      });
-
-      jobSection.style.display = 'block';
-    }
-
-    // Initial render
-    updateDropdown('');
+    // Initialize with full list
+    window.onload = updateDropdown;
   </script>
 </body>
 </html>
